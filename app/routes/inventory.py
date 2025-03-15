@@ -6,7 +6,8 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/verificar_codigo', methods=['POST'])
 def verify_code():
-    data = request.get_json()   
+    data = request.get_json() 
+    print(data)  
     codigo_barras = data.get('codigoBarras')
     usuario = data.get('usuario')
     data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")

@@ -9,8 +9,7 @@ class Inventory:
         cursor = self.db.get_cursor()
         query = "SELECT CODIGO_BARRAS, contagem1 FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
         cursor.execute(query, (codigo_barras,))
-        result = cursor.fetchone()
-        print(result)
+        result = cursor.fetchone()        
         cursor.close()
         return result
 
@@ -19,8 +18,7 @@ class Inventory:
         query = "SELECT emissao FROM contagem_app WHERE codigo = %s AND conferencia = 1 ORDER BY id DESC LIMIT 1"
         cursor.execute(query, (codigo_barras,))
         result = cursor.fetchone()
-        cursor.close()
-        print(result)
+        cursor.close()       
         return result
 
     def register_conference(self, codigo_barras, usuario):
@@ -66,6 +64,5 @@ class Inventory:
         """
         cursor.execute(query, (usuario,))
         result = cursor.fetchone()
-        cursor.close()
-        print(result)
+        cursor.close()       
         return result 
