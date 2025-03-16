@@ -6,37 +6,74 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/verificar_codigo', methods=['POST'])
 def verify_code():
-    data = request.get_json() 
-    print(data)  
+    data = request.get_json()  
     codigo_barras = data.get('codigoBarras')
     usuario = data.get('usuario')
     data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"dados recebidos: {data}")
 
     if not codigo_barras or not usuario:
-        return jsonify({'error': 'Código de barras e usuário são obrigatórios!'}), 400
+        return jsonify({
+            'success': False,
+            'mensagem': 'Código de barras e usuário são obrigatórios!',
+            'dados': None
+        }), 400
 
-    inventory = Inventory()
+    try:
+        inventory = Inventory()
+        
+        # Verify if code exists
+        code_result = inventory.verify_code(codigo_barras)
     
-    # Verify if code exists
-    code_result = inventory.verify_code(codigo_barras)
-    if not code_result:
-        return jsonify({'mensagem': 'CÓDIGO NÃO ENCONTRADO!'})
+        if not code_result:  # Corrigido de 'result' para 'code_result'
+            return jsonify({
+                'success': False,
+                'mensagem': 'Produto não encontrado',
+                'dados': None
+            }), 404
+           # Se já está conferido (contagem1 = 1), retorna erro
+        if code_result['contagem1'] == 1:
+            return jsonify({
+                'success': False,
+                'mensagem': 'Produto já conferido',
+                'dados': None
+            })
 
-    # Check last conference
-    last_conference = inventory.get_last_conference(codigo_barras)
-    if last_conference:
-        emissao = last_conference['emissao']
-        emissao_formatada = emissao.strftime("%d/%m/%Y %H:%M:%S")
-        return jsonify({'mensagem': f'MATERIAL JÁ CONFERIDO! {emissao_formatada}'})
+        # Verifica última conferência
+        # last_conference = inventory.get_last_conference(codigo_barras)
+        # if last_conference:
+        #     emissao = last_conference['emissao']
+        #     emissao_formatada = emissao.strftime("%d/%m/%Y %H:%M:%S")
+        #     return jsonify({
+        #         'success': False,
+        #         'mensagem': f'Material já conferido em {emissao_formatada} por {last_conference["nome_usuario"]}',
+        #         'dados': None
+        #     })
 
-    # Register conference
-    last_record = inventory.register_conference(codigo_barras, usuario)
-    ultimo_codigo = last_record['codigo'] if last_record else "NENHUM CÓDIGO ENCONTRADO!"
+        # Registra a conferência
+        conference_result = inventory.register_conference(codigo_barras, usuario)
+        
+        return jsonify({
+            'success': True,
+            'mensagem': 'Produto verificado com sucesso!',
+            'dados': {
+                'codigo_barras': code_result['codigo_barras'],
+                'referencia': code_result['referencia'],
+                'descricao': code_result['descricao'],
+                'data_conferencia': datetime.now().isoformat(),
+                'usuario': usuario,
+                'numero': code_result['numero'],
+                'item': code_result['item']
+            }
+        })
 
-    return jsonify({
-        'mensagem': f'CONFERÊNCIA REALIZADA COM SUCESSO! {data_hora_atual} (AGORA)',
-        'ultimoCodigo': ultimo_codigo
-    })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'mensagem': f'Erro ao verificar produto: {str(e)}',
+            'dados': None
+        }), 500
+
 
 @inventory_bp.route('/buscar_estoque', methods=['POST'])
 def get_stock():
@@ -53,6 +90,7 @@ def get_stock():
         return jsonify({'mensagem': 'Código não encontrado no estoque!'})
 
     return jsonify(result)
+
 
 @inventory_bp.route('/conferencias', methods=['POST'])
 def get_conferences():
@@ -73,4 +111,4 @@ def get_conferences():
         'countConferencia1': count_conferencia1,
         'countConferencia2': count_conferencia2,
         'diferenca': diferenca
-    }) 
+    })

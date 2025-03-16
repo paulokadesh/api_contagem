@@ -7,19 +7,31 @@ class Inventory:
 
     def verify_code(self, codigo_barras):
         cursor = self.db.get_cursor()
-        query = "SELECT CODIGO_BARRAS, contagem1 FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
-        cursor.execute(query, (codigo_barras,))
-        result = cursor.fetchone()        
-        cursor.close()
-        return result
+        try:
+            query = "SELECT * FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
+            cursor.execute(query, (codigo_barras,))
+            result = cursor.fetchone()
+            
+            if result:
+                return {
+                    'codigo_barras': result['CODIGO_BARRAS'],
+                    'referencia': result['REFERENCIA'],
+                    'descricao': result['DESCRICAO'],
+                    'numero': result['NUM'],
+                    'item': result['ITEM'],
+                    'contagem1': result['contagem1']
+                }
+            return None
+        finally:
+           cursor.close()
 
-    def get_last_conference(self, codigo_barras):
-        cursor = self.db.get_cursor()
-        query = "SELECT emissao FROM contagem_app WHERE codigo = %s AND conferencia = 1 ORDER BY id DESC LIMIT 1"
-        cursor.execute(query, (codigo_barras,))
-        result = cursor.fetchone()
-        cursor.close()       
-        return result
+    # def get_last_conference(self, codigo_barras):
+    #     cursor = self.db.get_cursor()
+    #     query = "SELECT emissao FROM contagem_app WHERE codigo = %s AND conferencia = 1 ORDER BY id DESC LIMIT 1"
+    #     cursor.execute(query, (codigo_barras,))
+    #     result = cursor.fetchone()
+    #     cursor.close()       
+    #     return result
 
     def register_conference(self, codigo_barras, usuario):
         cursor = self.db.get_cursor()
