@@ -8,12 +8,14 @@ def login():
     data = request.get_json()  
     usuario = data.get('usuario')
     senha = data.get('senha')
+   
 
     if not usuario or not senha:
       return jsonify({'error': 'Usuário e senha são obrigatórios!'}), 400
 
     user = User()
     result = user.verify_login(usuario, senha)
+
 
     
 
@@ -53,8 +55,11 @@ def login():
             }
         }
         return jsonify(response)
+        print(response)
     except Exception as e:
              return jsonify({
             'success': False,
             'mensagem': f'Erro interno do servidor: {str(e)}'
         }), 500
+    print(response) 
+      
