@@ -61,5 +61,5 @@ def login():
             'success': False,
             'mensagem': f'Erro interno do servidor: {str(e)}'
         }), 500
-    print(response) 
+    
       
