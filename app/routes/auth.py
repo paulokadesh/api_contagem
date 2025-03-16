@@ -55,7 +55,7 @@ def login():
             }
         }
         return jsonify(response)
-        print(response)
+        
     except Exception as e:
              return jsonify({
             'success': False,

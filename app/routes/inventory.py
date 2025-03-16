@@ -75,40 +75,40 @@ def verify_code():
         }), 500
 
 
-@inventory_bp.route('/buscar_estoque', methods=['POST'])
-def get_stock():
-    data = request.get_json()
-    codigo_barras = data.get('codigoBarras')
+# @inventory_bp.route('/buscar_estoque', methods=['POST'])
+# def get_stock():
+#     data = request.get_json()
+#     codigo_barras = data.get('codigoBarras')
 
-    if not codigo_barras:
-        return jsonify({'error': 'Código de barras é obrigatório!'}), 400
+#     if not codigo_barras:
+#         return jsonify({'error': 'Código de barras é obrigatório!'}), 400
 
-    inventory = Inventory()
-    result = inventory.get_stock_info(codigo_barras)
+#     inventory = Inventory()
+#     result = inventory.get_stock_info(codigo_barras)
 
-    if not result:
-        return jsonify({'mensagem': 'Código não encontrado no estoque!'})
+#     if not result:
+#         return jsonify({'mensagem': 'Código não encontrado no estoque!'})
 
-    return jsonify(result)
+#     return jsonify(result)
 
 
-@inventory_bp.route('/conferencias', methods=['POST'])
-def get_conferences():
-    data = request.get_json()
-    usuario = data.get('usuario')
+# @inventory_bp.route('/conferencias', methods=['POST'])
+# def get_conferences():
+#     data = request.get_json()
+#     usuario = data.get('usuario')
 
-    if not usuario:
-        return jsonify({'error': 'Usuário é obrigatório!'}), 400
+#     if not usuario:
+#         return jsonify({'error': 'Usuário é obrigatório!'}), 400
 
-    inventory = Inventory()
-    result = inventory.get_conference_counts(usuario)
+#     inventory = Inventory()
+#     result = inventory.get_conference_counts(usuario)
 
-    count_conferencia1 = result['countConferencia1'] or 0
-    count_conferencia2 = result['countConferencia2'] or 0
-    diferenca = count_conferencia1 - count_conferencia2
+#     count_conferencia1 = result['countConferencia1'] or 0
+#     count_conferencia2 = result['countConferencia2'] or 0
+#     diferenca = count_conferencia1 - count_conferencia2
 
-    return jsonify({
-        'countConferencia1': count_conferencia1,
-        'countConferencia2': count_conferencia2,
-        'diferenca': diferenca
-    })
+#     return jsonify({
+#         'countConferencia1': count_conferencia1,
+#         'countConferencia2': count_conferencia2,
+#         'diferenca': diferenca
+#     })

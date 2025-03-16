@@ -57,24 +57,24 @@ class Inventory:
         finally:
             cursor.close()
 
-    def get_stock_info(self, codigo_barras):
-        cursor = self.db.get_cursor()
-        query = "SELECT ITEM, DESCRICAO, QUANT, NUM, REFERENCIA FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
-        cursor.execute(query, (codigo_barras,))
-        result = cursor.fetchone()
-        cursor.close()
-        return result
+    # def get_stock_info(self, codigo_barras):
+    #     cursor = self.db.get_cursor()
+    #     query = "SELECT ITEM, DESCRICAO, QUANT, NUM, REFERENCIA FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
+    #     cursor.execute(query, (codigo_barras,))
+    #     result = cursor.fetchone()
+    #     cursor.close()
+    #     return result
 
-    def get_conference_counts(self, usuario):
-        cursor = self.db.get_cursor()
-        query = """
-            SELECT 
-                SUM(CASE WHEN conferencia = 1 THEN 1 ELSE 0 END) AS countConferencia1,
-                SUM(CASE WHEN conferencia = 2 THEN 1 ELSE 0 END) AS countConferencia2
-            FROM contagem_app
-            WHERE usuario = %s
-        """
-        cursor.execute(query, (usuario,))
-        result = cursor.fetchone()
-        cursor.close()       
-        return result 
+    # def get_conference_counts(self, usuario):
+    #     cursor = self.db.get_cursor()
+    #     query = """
+    #         SELECT 
+    #             SUM(CASE WHEN conferencia = 1 THEN 1 ELSE 0 END) AS countConferencia1,
+    #             SUM(CASE WHEN conferencia = 2 THEN 1 ELSE 0 END) AS countConferencia2
+    #         FROM contagem_app
+    #         WHERE usuario = %s
+    #     """
+    #     cursor.execute(query, (usuario,))
+    #     result = cursor.fetchone()
+    #     cursor.close()       
+    #     return result 
