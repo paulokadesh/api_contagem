@@ -25,13 +25,7 @@ class Inventory:
         finally:
            cursor.close()
 
-    # def get_last_conference(self, codigo_barras):
-    #     cursor = self.db.get_cursor()
-    #     query = "SELECT emissao FROM contagem_app WHERE codigo = %s AND conferencia = 1 ORDER BY id DESC LIMIT 1"
-    #     cursor.execute(query, (codigo_barras,))
-    #     result = cursor.fetchone()
-    #     cursor.close()       
-    #     return result
+
 
     def register_conference(self, codigo_barras, usuario):
         cursor = self.db.get_cursor()
@@ -57,24 +51,131 @@ class Inventory:
         finally:
             cursor.close()
 
-    # def get_stock_info(self, codigo_barras):
-    #     cursor = self.db.get_cursor()
-    #     query = "SELECT ITEM, DESCRICAO, QUANT, NUM, REFERENCIA FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
-    #     cursor.execute(query, (codigo_barras,))
-    #     result = cursor.fetchone()
-    #     cursor.close()
-    #     return result
+   
 
-    # def get_conference_counts(self, usuario):
-    #     cursor = self.db.get_cursor()
-    #     query = """
-    #         SELECT 
-    #             SUM(CASE WHEN conferencia = 1 THEN 1 ELSE 0 END) AS countConferencia1,
-    #             SUM(CASE WHEN conferencia = 2 THEN 1 ELSE 0 END) AS countConferencia2
-    #         FROM contagem_app
-    #         WHERE usuario = %s
-    #     """
-    #     cursor.execute(query, (usuario,))
-    #     result = cursor.fetchone()
-    #     cursor.close()       
-    #     return result 
+    def verificar_produto_caixa(self, numero_caixa, codigo_produto, id_caixa):
+        cursor = self.db.get_cursor()
+        try:
+            # Primeiro, verifica se o produto existe e pega sua data de fabricação
+            query_produto = """
+                SELECT DATA data_fab,CODIGO_BARRAS, REFERENCIA, DESCRICAO, NUM, ITEM
+                FROM estoque_entradas 
+                WHERE CODIGO_BARRAS = %s
+            """
+            cursor.execute(query_produto, (codigo_produto,))
+            produto = cursor.fetchone()
+            
+            if not produto:
+                return None, "Produto não encontrado"
+
+            # Verifica se o produto já está em alguma caixa
+            query_verificacao = """
+                SELECT * FROM caixa_dt_conferencia cdc                
+                WHERE cdc.cod_barras = %s
+            """
+            cursor.execute(query_verificacao, (codigo_produto,))
+            caixa_existente = cursor.fetchone()
+            
+            if caixa_existente:
+                return None, f"Produto já está na caixa {caixa_existente['id_caixa']}"
+
+            # Data e hora atual
+            data_hora_atual = datetime.now()
+
+            # Registra o produto na caixa usando o id_caixa recebido
+            query_insert = """
+                INSERT INTO caixa_dt_conferencia 
+                (id_caixa, cod_barras, qtde, item, num, data_fab, data_inclusao) 
+                VALUES (%s, %s, 1, %s, %s, %s, %s)
+            """
+            cursor.execute(query_insert, (
+                id_caixa,
+                produto['CODIGO_BARRAS'],
+                produto['ITEM'],
+                produto['NUM'],
+                produto['data_fab'],
+                data_hora_atual
+            ))
+            self.db.connection.commit()
+
+            return {
+                'codigo_produto': produto['CODIGO_BARRAS'],
+                'referencia': produto['REFERENCIA'],
+                'descricao': produto['DESCRICAO'],
+                'numero': produto['NUM'],
+                'item': produto['ITEM'],
+                'numero_caixa': numero_caixa,
+                'id_caixa': id_caixa,
+                'data_fabricacao': produto['data_fab'].isoformat() if produto['data_fab'] else None,
+                'data_inclusao': data_hora_atual.isoformat()
+            }, "Produto adicionado à caixa com sucesso"
+
+        except Exception as e:
+            self.db.connection.rollback()
+            raise e
+        finally:
+            cursor.close()
+
+    def carregar_caixa(self, numero_caixa, usuario):
+        cursor = self.db.get_cursor()
+        try:
+            # Busca a caixa e seus produtos usando subquery e LEFT JOIN
+            query = """
+                SELECT 
+                    ms.ID,
+                    ms.COD_CAIXA,
+                    cdc.qtde,
+                    cdc.cod_barras,
+                    cdc.item,
+                    cdc.num,
+                    cdc.data_fab,
+                    cdc.data_inclusao,
+                    e.REFERENCIA,
+                    e.DESCRICAO
+                FROM (
+                    SELECT cmc.ID, cmc.COD_CAIXA 
+                    FROM caixas_ms_conferencia cmc 
+                    WHERE cmc.COD_CAIXA = %s
+                ) ms
+                LEFT OUTER JOIN caixa_dt_conferencia cdc ON cdc.id_caixa = ms.ID
+                LEFT JOIN estoque_entradas e ON cdc.cod_barras = e.CODIGO_BARRAS
+            """
+            cursor.execute(query, (numero_caixa,))
+            resultados = cursor.fetchall()
+            
+            if not resultados:
+                return {
+                    'numero_caixa': numero_caixa,
+                    'total_produtos': 0,
+                    'produtos': [],
+                    'usuario_atual': usuario
+                }
+
+            # Formata os produtos para retorno
+            produtos_formatados = []
+            total_produtos = 0
+            
+            for produto in resultados:
+                if produto['cod_barras']:  # Só adiciona se tiver produto (devido ao LEFT JOIN)
+                    total_produtos += 1
+                    produtos_formatados.append({
+                        'codigo_produto': produto['cod_barras'],
+                        'referencia': produto['REFERENCIA'],
+                        'descricao': produto['DESCRICAO'],
+                        'numero': produto['num'],
+                        'item': produto['item'],
+                        'quantidade': produto['qtde'],
+                        'data_fabricacao': produto['data_fab'].isoformat() if produto['data_fab'] else None,
+                        'data_inclusao': produto['data_inclusao'].isoformat() if produto['data_inclusao'] else None
+                    })
+
+            return {
+                'numero_caixa': numero_caixa,
+                'id_caixa': resultados[0]['ID'] if resultados else None,
+                'total_produtos': total_produtos,
+                'produtos': produtos_formatados,
+                'usuario_atual': usuario
+            }
+
+        finally:
+            cursor.close() 

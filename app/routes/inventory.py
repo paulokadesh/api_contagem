@@ -112,3 +112,77 @@ def verify_code():
 #         'countConferencia2': count_conferencia2,
 #         'diferenca': diferenca
 #     })
+
+@inventory_bp.route('/verificar_produto_caixa', methods=['POST'])
+def verificar_produto_caixa():
+    data = request.get_json()
+    
+    # Validação dos dados recebidos
+    numero_caixa = data.get('numeroCaixa')
+    codigo_produto = data.get('codigoProduto')
+    id_caixa = data.get('id_caixa')
+
+    if not all([numero_caixa, codigo_produto, id_caixa]):
+        return jsonify({
+            'success': False,
+            'mensagem': 'Todos os campos são obrigatórios: numeroCaixa, codigoProduto e id_caixa',
+            'dados': None
+        }), 400
+
+    try:
+        inventory = Inventory()
+        resultado, mensagem = inventory.verificar_produto_caixa(numero_caixa, codigo_produto, id_caixa)
+
+        if not resultado:
+            return jsonify({
+                'success': False,
+                'mensagem': mensagem,
+                'dados': None
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'mensagem': mensagem,
+            'dados': resultado
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'mensagem': f'Erro ao verificar produto na caixa: {str(e)}',
+            'dados': None
+        }), 500
+
+@inventory_bp.route('/carregar_caixa', methods=['POST'])
+def carregar_caixa():
+    data = request.get_json()
+    print(f"dados recebidos: {data}")
+    
+    # Validação dos dados recebidos
+    numero_caixa = data.get('numeroCaixa')
+    usuario = data.get('usuario')
+
+    if not all([numero_caixa, usuario]):
+        return jsonify({
+            'success': False,
+            'mensagem': 'Número da caixa e usuário são obrigatórios',
+            'dados': None
+        }), 400
+
+    try:
+        inventory = Inventory()
+        resultado = inventory.carregar_caixa(numero_caixa, usuario)
+
+        return jsonify({
+            'success': True,
+            'mensagem': 'Caixa carregada com sucesso',
+            'dados': resultado
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'mensagem': f'Erro ao carregar caixa: {str(e)}',
+            'dados': None
+        }), 500
+    print(response.json()['dados']['total_produtos'])
