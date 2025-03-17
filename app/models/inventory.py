@@ -58,7 +58,7 @@ class Inventory:
         try:
             # Primeiro, verifica se o produto existe e pega sua data de fabricação
             query_produto = """
-                SELECT DATA data_fab,CODIGO_BARRAS, REFERENCIA, DESCRICAO, NUM, ITEM
+                SELECT DATA data_fab, CODIGO_BARRAS, REFERENCIA, DESCRICAO, NUM, ITEM
                 FROM estoque_entradas 
                 WHERE CODIGO_BARRAS = %s
             """
@@ -70,14 +70,16 @@ class Inventory:
 
             # Verifica se o produto já está em alguma caixa
             query_verificacao = """
-                SELECT * FROM caixa_dt_conferencia cdc                
+                SELECT cdc.*, cmc.COD_CAIXA 
+                FROM caixa_dt_conferencia cdc
+                JOIN caixas_ms_conferencia cmc ON cmc.ID = cdc.id_caixa
                 WHERE cdc.cod_barras = %s
             """
             cursor.execute(query_verificacao, (codigo_produto,))
             caixa_existente = cursor.fetchone()
             
             if caixa_existente:
-                return None, f"Produto já está na caixa {caixa_existente['id_caixa']}"
+                return None, f"Produto já está na caixa {caixa_existente['COD_CAIXA']}"
 
             # Data e hora atual
             data_hora_atual = datetime.now()
@@ -85,7 +87,7 @@ class Inventory:
             # Registra o produto na caixa usando o id_caixa recebido
             query_insert = """
                 INSERT INTO caixa_dt_conferencia 
-                (id_caixa, cod_barras, qtde, item, num, data_fab, data_inclusao) 
+                (id_caixa, cod_barras, qtde, item, num, data_fab, inclusao) 
                 VALUES (%s, %s, 1, %s, %s, %s, %s)
             """
             cursor.execute(query_insert, (
@@ -98,17 +100,9 @@ class Inventory:
             ))
             self.db.connection.commit()
 
-            return {
-                'codigo_produto': produto['CODIGO_BARRAS'],
-                'referencia': produto['REFERENCIA'],
-                'descricao': produto['DESCRICAO'],
-                'numero': produto['NUM'],
-                'item': produto['ITEM'],
-                'numero_caixa': numero_caixa,
-                'id_caixa': id_caixa,
-                'data_fabricacao': produto['data_fab'].isoformat() if produto['data_fab'] else None,
-                'data_inclusao': data_hora_atual.isoformat()
-            }, "Produto adicionado à caixa com sucesso"
+            # Após inserir com sucesso, carrega a caixa atualizada
+            resultado_caixa = self.carregar_caixa(numero_caixa, "")  # Passamos string vazia como usuário pois não é necessário aqui
+            return resultado_caixa, "Produto adicionado à caixa com sucesso"
 
         except Exception as e:
             self.db.connection.rollback()
@@ -129,7 +123,7 @@ class Inventory:
                     cdc.item,
                     cdc.num,
                     cdc.data_fab,
-                    cdc.data_inclusao,
+                    cdc.inclusao,
                     e.REFERENCIA,
                     e.DESCRICAO
                 FROM (
@@ -166,7 +160,7 @@ class Inventory:
                         'item': produto['item'],
                         'quantidade': produto['qtde'],
                         'data_fabricacao': produto['data_fab'].isoformat() if produto['data_fab'] else None,
-                        'data_inclusao': produto['data_inclusao'].isoformat() if produto['data_inclusao'] else None
+                        'data_inclusao': produto['inclusao'].isoformat() if produto['inclusao'] else None
                     })
 
             return {
