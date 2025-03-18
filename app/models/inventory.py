@@ -8,6 +8,9 @@ class Inventory:
     def verify_code(self, codigo_barras):
         cursor = self.db.get_cursor()
         try:
+            # Limpa o cache antes da consulta
+            cursor.execute("FLUSH QUERY CACHE;")
+            
             query = "SELECT * FROM estoque_entradas WHERE CODIGO_BARRAS = %s"
             cursor.execute(query, (codigo_barras,))
             result = cursor.fetchone()
@@ -24,8 +27,6 @@ class Inventory:
             return None
         finally:
            cursor.close()
-
-
 
     def register_conference(self, codigo_barras, usuario):
         cursor = self.db.get_cursor()
@@ -44,6 +45,8 @@ class Inventory:
             last_record = cursor.fetchone()
 
             self.db.connection.commit()
+            # Limpa o cache após o commit
+            cursor.execute("FLUSH QUERY CACHE;")
             return last_record
         except Exception as e:
             self.db.connection.rollback()
@@ -51,11 +54,12 @@ class Inventory:
         finally:
             cursor.close()
 
-   
-
     def verificar_produto_caixa(self, numero_caixa, codigo_produto, id_caixa):
         cursor = self.db.get_cursor()
         try:
+            # Limpa o cache antes da consulta
+            cursor.execute("FLUSH QUERY CACHE;")
+            
             # Primeiro, verifica se o produto existe e pega sua data de fabricação
             query_produto = """
                 SELECT DATA data_fab, CODIGO_BARRAS, REFERENCIA, DESCRICAO, NUM, ITEM
@@ -98,7 +102,15 @@ class Inventory:
                 produto['data_fab'],
                 data_hora_atual
             ))
+            
+            # Força o commit imediato
             self.db.connection.commit()
+            
+            # Limpa o cache da query
+            cursor.execute("FLUSH QUERY CACHE;")
+
+            # Fecha o cursor atual antes de abrir um novo
+            cursor.close()
 
             # Após inserir com sucesso, carrega a caixa atualizada
             resultado_caixa = self.carregar_caixa(numero_caixa, "")  # Passamos string vazia como usuário pois não é necessário aqui
@@ -108,11 +120,15 @@ class Inventory:
             self.db.connection.rollback()
             raise e
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
 
     def carregar_caixa(self, numero_caixa, usuario):
         cursor = self.db.get_cursor()
         try:
+            # Limpa o cache antes da consulta
+            cursor.execute("FLUSH QUERY CACHE;")
+            
             # Busca a caixa e seus produtos usando subquery e LEFT JOIN
             query = """
                 SELECT 
@@ -172,4 +188,5 @@ class Inventory:
             }
 
         finally:
-            cursor.close() 
+            if cursor:
+                cursor.close() 

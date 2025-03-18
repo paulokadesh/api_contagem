@@ -156,7 +156,7 @@ def verificar_produto_caixa():
 @inventory_bp.route('/carregar_caixa', methods=['POST'])
 def carregar_caixa():
     data = request.get_json()
-    print(f"dados recebidos: {data}")
+ 
     
     # Validação dos dados recebidos
     numero_caixa = data.get('numeroCaixa')
@@ -185,4 +185,4 @@ def carregar_caixa():
             'mensagem': f'Erro ao carregar caixa: {str(e)}',
             'dados': None
         }), 500
-    print(response.json()['dados']['total_produtos'])
+  
