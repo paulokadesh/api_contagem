@@ -1,0 +1,185 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "API de Controle de Inventário",
+    "description": "API para gerenciamento de inventário e controle de conferência de produtos",
+    "version": "1.0.0",
+    "contact": {
+      "email": "seu-email@exemplo.com"
+    }
+  },
+  "paths": {
+    "/verificar_codigo": {
+      "post": {
+        "tags": ["Inventário"],
+        "summary": "Verifica e registra a conferência de um produto",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificarCodigo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produto verificado com sucesso",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "mensagem": "Produto verificado com sucesso!",
+                  "dados": {
+                    "codigo_barras": "123456789",
+                    "referencia": "REF001",
+                    "descricao": "Produto Exemplo",
+                    "data_conferencia": "2024-03-18T10:00:00",
+                    "usuario": "user123",
+                    "numero": "001",
+                    "item": "001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
+    "/verificar_produto_caixa": {
+      "post": {
+        "tags": ["Inventário"],
+        "summary": "Verifica se um produto pertence a uma determinada caixa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificarProdutoCaixa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produto verificado com sucesso",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "mensagem": "Produto verificado com sucesso",
+                  "dados": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "404": {
+            "description": "Produto ou caixa não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
+    "/carregar_caixa": {
+      "post": {
+        "tags": ["Inventário"],
+        "summary": "Carrega informações de uma caixa específica",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarregarCaixa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Caixa carregada com sucesso",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "mensagem": "Caixa carregada com sucesso",
+                  "dados": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "404": {
+            "description": "Caixa não encontrada"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VerificarCodigo": {
+        "type": "object",
+        "properties": {
+          "codigoBarras": {
+            "type": "string",
+            "description": "Código de barras do produto"
+          },
+          "usuario": {
+            "type": "string",
+            "description": "Identificador do usuário"
+          }
+        },
+        "required": ["codigoBarras", "usuario"]
+      },
+      "VerificarProdutoCaixa": {
+        "type": "object",
+        "properties": {
+          "numeroCaixa": {
+            "type": "string",
+            "description": "Número da caixa"
+          },
+          "codigoProduto": {
+            "type": "string",
+            "description": "Código do produto"
+          },
+          "id_caixa": {
+            "type": "string",
+            "description": "ID da caixa"
+          }
+        },
+        "required": ["numeroCaixa", "codigoProduto", "id_caixa"]
+      },
+      "CarregarCaixa": {
+        "type": "object",
+        "properties": {
+          "numeroCaixa": {
+            "type": "string",
+            "description": "Número da caixa"
+          },
+          "usuario": {
+            "type": "string",
+            "description": "Identificador do usuário"
+          }
+        },
+        "required": ["numeroCaixa", "usuario"]
+      }
+    }
+  }
+} 
